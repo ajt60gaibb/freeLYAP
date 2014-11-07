@@ -33,13 +33,13 @@ function X = lyap(A, B, C, E)
 if ( nargin == 2 )
     % A*X + X*A' + B = 0
     IA = eye(size(A));
-    X = bartelsStewart(A, IA, IA, A, -B, false, false);
+    X = bartelsStewart(A, IA, IA, conj(A), -B, false, false);
     
 elseif ( nargin == 3 )
     % A*X + X*B + C = 0
     IA = eye(size(A));
     IB = eye(size(B));
-    X = bartelsStewart(A, IA, IB', B', -C, false, false);
+    X = bartelsStewart(A, IA, IB.', B.', -C, false, false);
     
 else
     % A*X*E' + E*X*A' + B = 0.
