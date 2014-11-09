@@ -40,7 +40,7 @@ if ( norm(E) < tol )
 end
 
 if ( isempty(B) && isempty(C) )
-    X = bs1(A, D, E);
+    X = sylv(A, D, E);
     return
 end
 
@@ -252,25 +252,37 @@ Z(2:2:end,bot) = Z2;
 end
 
 
-function X = bs1(A, D, E)
+function X = sylv(A, D, E)
+%SYLV  Solve Sylvester matrix equation.
+%   SYLV(A, D, E) solves the Sylvester matrix equation
+%       A*X + X*D^T + E = 0.
+%   SYLV(A, [], E) solves the Lyapunov matrix ewuation
+%       A*X + X*A^T + E = 0.
 
+% TODO: Need to be more careful about ^T vs ^* and +/- E in definition.
+
+% Get sizes
 m = size(A, 1); 
 n = size(D, 2); 
 
+% Compute Schur factorizations. (P and T will be upper triangular.)
 [Z1, P] = schur(A, 'complex');
-
-if ( ~all(A == D) )
+if ( ~isempty(D) )
     [Z2, T] = schur(D, 'complex');
 else
-    Z2 = Z1;
-    T = P;
+%     D = conj(A).
+%     [Z2, T] = schur(D, 'complex');
+    Z2 = conj(Z1);
+    T = conj(P);
+    n = size(A, 2);
 end
 
+% Transform the righthand side.
+F = Z1'*E*conj(Z2); % <-- Not sure why conj() is eeded here.
+
+% Initialise identity matrix and storage for transformed solution.
 I = speye(m, n);
 Y = zeros(m, n);
-
-% Transform the righthand side.
-F = Z1'*E*conj(Z2);
 
 % Do a backwards substitution to construct the transformed solution.
 for k = n:-1:1
@@ -280,7 +292,7 @@ for k = n:-1:1
     Y(:,k) = (P + T(k,k)*I) \ rhs;
 end
 
-% We have now computed the transformed solution so we just transform it back.
+% Transform solution back:
 X = Z1*Y*Z2.';
 
 end

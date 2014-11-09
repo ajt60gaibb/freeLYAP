@@ -32,7 +32,7 @@ function X = lyap(A, B, C, E)
 
 if ( nargin == 2 )
     % A*X + X*A' + B = 0
-    X = bartelsStewart(A, [], [], conj(A), -B, false, false);
+    X = bartelsStewart(A, [], [], [], -B, false, false);
     if ( isreal(A) && isreal(B) )
         X = real(X);
     end
