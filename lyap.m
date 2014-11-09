@@ -32,18 +32,24 @@ function X = lyap(A, B, C, E)
 
 if ( nargin == 2 )
     % A*X + X*A' + B = 0
-    IA = [];
-    X = bartelsStewart(A, IA, IA, conj(A), -B, false, false);
+    X = bartelsStewart(A, [], [], conj(A), -B, false, false);
+    if ( isreal(A) && isreal(B) )
+        X = real(X);
+    end
     
 elseif ( nargin == 3 )
     % A*X + X*B + C = 0
-    IA = [];
-    IB = [];
-    X = bartelsStewart(A, IA, IB.', B.', -C, false, false);
+    X = bartelsStewart(A, [], [], B.', -C, false, false);
+    if ( isreal(A) && isreal(B) && isreal(C) )
+        X = real(X);
+    end
     
 else
     % A*X*E' + E*X*A' + B = 0.
     X = bartelsStewart(A, E, E, A, -B, false, false);
+    if ( isreal(A) && isreal(B) && isreal(E) )
+        X = real(X);
+    end
     
 end 
 
