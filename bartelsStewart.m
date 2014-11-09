@@ -7,15 +7,15 @@ function X = bartelsStewart(A, B, C, D, E, xSplit, ySplit, tol)
 %
 % by using the Bartels--Stewart algorithm, see 
 %
-% J. D. Gardiner, A. J. Laub, J. J. Amato, & C. B. Moler, Solution of 
-% the Sylvester matrix equation AXB^T+ CXD^T= E, ACM Transactions on 
-% Mathematical Software (TOMS), 18(2), 223-231.
+% J. D. Gardiner, A. J. Laub, J. J. Amato, & C. B. Moler, Solution of the
+% Sylvester matrix equation AXB^T + CXD^T = E, ACM Transactions on Mathematical
+% Software (TOMS), 18(2), 223-231.
 %
 % Note that if B or C are empty, they are assumed to be identity mtrices of the
 % appropriate size. This is more efficient that passing identity matrices.
 % 
-% This Bartels--Stewart solver also takes information xsplit, ysplit so
-% that if possible it decouples the even and odd modes.
+% This Bartels--Stewart solver also takes information xsplit, ysplit so that if
+% possible it decouples the even and odd modes.
 
 % Copyright 2014 by The University of Oxford and The Chebfun2 Developers.
 % See http://www.chebfun.org/ for Chebfun information.
@@ -52,7 +52,8 @@ Y = zeros(m, n);
 if ( isempty(C) )
     [Z1, P] = schur(A, 'complex');
     Q1 = Z1';
-    S = speye(n, m);
+%     S = speye(n, m);
+    S = eye(n, m);
 elseif ( ySplit )
     % This is equivalent to qz(A,C), but faster.
     [P, S, Q1, Z1] = qzsplit(A, C); 
@@ -68,8 +69,10 @@ S = triu(S);
 % double as many subproblems.
 if ( isempty(B) )
     [Z2, T] = schur(D, 'complex');
+%     [Z2, T] = schur(D);
     Q2 = Z2';
-    R = speye(m, n);
+%     R = speye(m, n);
+    R = eye(m, n);
 elseif ( xSplit )
     % Faster QZ when even/odd modes decouple in x-direction: 
     [T, R, Q2, Z2] = qzsplit(D, B);
@@ -97,7 +100,6 @@ while ( k > 1 )
     % There are two cases, either the subdiagonal contains a zero, i.e.,
     % T(k,k-1) = 0 and then it is simply a backwards substitution, or T(k,k-1)
     % ~= 0 and we solve a 2x2 system.
-    
     if ( T(k,k-1) == 0 )
         % Simple case (Usually end up here).
         
@@ -123,7 +125,7 @@ while ( k > 1 )
         k = k - 1;
         
     else
-        
+
         % This is a straight copy from the Gardiner et al. paper, and just
         % solves for two columns at once. (Works because of quasi-triangular
         % matrices.)
@@ -132,29 +134,33 @@ while ( k > 1 )
         rhs1 = F(:,k-1);
         rhs2 = F(:,k);
         
-        for jj = (k + 1):n
+        for jj = (k+1):n
             yj = Y(:,jj);
-            rhs1 = rhs1 - R(k-1,jj)*P*yj - T(k-1,jj)*S*yj;
-            rhs2 = rhs2 - R(k,jj)*P*yj - T(k,jj)*S*yj;
+            Pyj = P*yj;
+            Syj = S*yj;
+            rhs1 = rhs1 - R(k-1,jj)*Pyj - T(k-1,jj)*Syj;
+            rhs2 = rhs2 - R(k,jj)*Pyj - T(k,jj)*Syj;
         end
         
         % 2 by 2 system.
-        SM = zeros(2*n);
         top = 1:n;
         bot = (n+1):(2*n);
-        
-        SM(top,top) = R(k-1,k-1)*P + T(k-1,k-1)*S;
-        SM(top,bot) = R(k-1,k)*P + T(k-1,k)*S;
-        SM(bot,top) = R(k,k-1)*P + T(k,k-1)*S;
-        SM(bot,bot) = R(k,k)*P + T(k,k)*S;
-        
-        % Permute the columns and rows: 
-        SPermuted = zeros(2*n);
-        SPermuted(1:2:2*n,1:2:2*n) = SM(1:n,1:n); 
-        SPermuted(2:2:2*n,2:2:2*n) = SM(n+1:2*n,n+1:2*n); 
+%         SM = zeros(2*n);
+%         SM(top,top) = R(k-1,k-1)*P + T(k-1,k-1)*S;
+%         SM(top,bot) = R(k-1,k)*P + T(k-1,k)*S;
+%         SM(bot,top) = R(k,k-1)*P + T(k,k-1)*S;
+%         SM(bot,bot) = R(k,k)*P + T(k,k)*S;
+
+        SM = [R(k-1,k-1)*P + T(k-1,k-1)*S , R(k-1,k)*P + T(k-1,k)*S ;
+              R(k,k-1)*P + T(k,k-1)*S     , R(k,k)*P + T(k,k)*S     ];
+          
+%         % Permute the columns and rows: 
+%         SPermuted = zeros(2*n);
+%         SPermuted(1:2:2*n,1:2:2*n) = SM(top, top); 
+%         SPermuted(2:2:2*n,2:2:2*n) = SM(bot, bot);
 
         % Solve.
-        UM = SPermuted \ [rhs1 ; rhs2];
+        UM = SM \ [rhs1 ; rhs2];
         
         Y(:,k-1)  = UM(top); 
         Y(:,k)    = UM(bot);
@@ -162,7 +168,7 @@ while ( k > 1 )
         PY(:,k-1) = P*Y(:,k-1);
         SY(:,k)   = S*Y(:,k); 
         SY(:,k-1) = S*Y(:,k-1);
-        
+
         % We solved for two columns so go two columns further.
         k = k - 2;
         
@@ -189,17 +195,22 @@ end
 function [P, S, Q1, Z1] = qzsplit(A, C)
 %QZSPLIT   A faster qz factorisation for problems that decouple.
 %
-% This is equivalent to standard qz, except we take account of symmetry to
-% reduce the computational requirements of the QZ factorisation.
+% This is equivalent to standard QZ, except we take account of symmetry to
+% reduce the computational requirements.
 
 % Do the QZ by splitting the problem into two subproblems. 
 
-A1 = A(1:2:end,1:2:end); 
-C1 = C(1:2:end,1:2:end);
+n = size(A, 1);
+
+odd  = 1:2:n;
+even = 2:2:n;
+
+A1 = A(odd, odd); 
+C1 = C(odd, odd);
 [P1, S1, Q1, Z1] = qz(A1, C1);
 
-A2 = A(2:2:end,2:2:end); 
-C2 = C(2:2:end,2:2:end);
+A2 = A(even, even); 
+C2 = C(even, even);
 [P2, S2, Q2, Z2] = qz(A2, C2);
 
 [P, S, Q1, Z1] = reform(P1, P2, S1, S2, Q1, Q2, Z1, Z2);
@@ -209,25 +220,29 @@ end
 function [P, S, Q, Z] = reform(P1, P2, S1, S2, Q1, Q2, Z1, Z2)
 %REFORM   Recombine subproblems to form the QZ factorization. 
 
-% Initialise all the variables. 
+% Determine the indedxing:
 hf1 = size(P1, 1);
-n = 2*hf1 - 1;
+n   = 2*hf1 - 1;
+top = 1:hf1;
+bot = (hf1+1):n;
+
+% Push the subproblem back together:
+P = blkdiag(P1, P2);
 P = zeros(n);
+P(top,top) = P1; 
+P(bot,bot) = P2;
+
 S = zeros(n);
+S(top,top) = S1; 
+S(bot,bot) = S2;
+P = blkdiag(P1, P2);
+
 Q = zeros(n);
+Q(top,1:2:end) = Q1; 
+Q(bot,2:2:end) = Q2;
+
 Z = zeros(n);
-
-% Push the subproblem back together.
-P(1:hf1,1:hf1) = P1; 
-P(hf1+1:end,hf1+1:end) = P2;
-
-S(1:hf1,1:hf1) = S1; 
-S(hf1+1:end,hf1+1:end) = S2;
-
-Q(1:hf1,1:2:end) = Q1; 
-Q(hf1+1:end,2:2:end) = Q2;
-
-Z(1:2:end,1:hf1) = Z1; 
-Z(2:2:end,hf1+1:end) = Z2;
+Z(1:2:end,top) = Z1; 
+Z(2:2:end,bot) = Z2;
 
 end
