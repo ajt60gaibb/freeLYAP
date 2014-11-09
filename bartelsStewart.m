@@ -1,4 +1,4 @@
-function X = bartelsStewart(A, B, C, D, E, xsplit, ysplit)
+function X = bartelsStewart(A, B, C, D, E, xSplit, ySplit, tol)
 %BARTELSSTEWART   Solution to generalized Sylvester matrix equation. 
 % 
 % Computes the solution to the Sylvester equation
@@ -17,39 +17,65 @@ function X = bartelsStewart(A, B, C, D, E, xsplit, ysplit)
 % Copyright 2014 by The University of Oxford and The Chebfun2 Developers.
 % See http://www.chebfun.org/ for Chebfun information.
 
-prefs = chebfunpref(); 
-tol = prefs.techPrefs.eps; 
+% Parse inputs:
+if ( nargin < 6 )
+    xSplit = false;
+end
+if ( nargin < 7 )
+    xSplit = false;
+end
+if ( nargin < 8 )
+    % Fixed tolerance:
+    tol = 10*eps; 
+end
 
 % If the RHS is zero then the solution is the zero solution (assuming
 % uniqueness).
-if ( norm(E) < 10*tol )
+if ( norm(E) < tol )
     X = zeros(size(E));
     return
 end
 
-% If the equation is even/odd in the x-direction then we can split the problem
-% into two subproblems. We enforce P and S as upper triangular because they
-% are up to rounding errors, and we need to do back substitution with
-% them.
-if ( ysplit )
-    % This is equivalent to qz(full(A),full(C)), but faster.
-    [P, S, Q1, Z1] = qzsplit(A, C); 
-    P = triu(P); 
-    S = triu(S);
-else
-    [P, S, Q1, Z1] = qz(full(A), full(C));  
-    P = triu(P); 
-    S = triu(S);
-end
+% Matrices must be sparse for QZ():
+A = full(A);
+B = full(B);
+C = full(C);
+D = full(D);
 
-% If the PDE is even/odd in the y-direction then we can split (further)
-% into double as many subproblems.
-if ( xsplit )
+% Solution will be a m by n matrix.
+m = size(A, 1); 
+n = size(D, 2); 
+Y = zeros(m, n);
+
+% If the equation is even/odd in the x-direction then we can split the problem
+% into two subproblems.
+if ( isempty(C) )
+    [Z1, P] = schur(A, 'complex');
+    Q1 = Z1';
+    S = speye(n, m);
+elseif ( ySplit )
+    % This is equivalent to qz(A,C), but faster.
+    [P, S, Q1, Z1] = qzsplit(A, C); 
+else
+    [P, S, Q1, Z1] = qz(A, C);  
+end
+% We enforce P and S as upper triangular because they should be (up to rounding
+% errors) and we need to do back substitution with them.
+P = triu(P); 
+S = triu(S);
+
+% If the PDE is even/odd in the y-direction then we can split (further) into
+% double as many subproblems.
+if ( isempty(B) )
+    [Z2, T] = schur(D, 'complex');
+    Q2 = Z2';
+    R = speye(m, n);
+elseif ( xSplit )
     % Faster QZ when even/odd modes decouple in x-direction: 
     [T, R, Q2, Z2] = qzsplit(D, B);
 else
     % QZ does not take matrices in sparse format:
-    [T, R, Q2, Z2] = qz(full(D), full(B));
+    [T, R, Q2, Z2] = qz(D, B);
 end
 
 % Now use the generalised Bartels--Stewart solver found in Gardiner et al.
@@ -59,13 +85,8 @@ end
 % transform the righthand side.
 F = Q1*E*Q2.';
 
-% Solution will be a m by n matrix.
-m = size(A, 1); 
-n = size(B, 1); 
-Y = zeros(m, n);
-
 % Do a backwards substitution type algorithm to construct the solution.
-k=n;
+k = n;
 PY = zeros(m);
 SY = zeros(m);
 
@@ -168,10 +189,8 @@ function [P, S, Q1, Z1] = qzsplit(A, C)
 % reduce the computational requirements of the QZ factorisation.
 
 % Do the QZ by splitting the problem into two subproblems. 
-A = full(A); 
 
 A1 = A(1:2:end,1:2:end); 
-C = full(C); 
 C1 = C(1:2:end,1:2:end);
 [P1, S1, Q1, Z1] = qz(A1, C1);
 
