@@ -10,6 +10,9 @@ function X = bartelsStewart(A, B, C, D, E, xSplit, ySplit, tol)
 % J. D. Gardiner, A. J. Laub, J. J. Amato, & C. B. Moler, Solution of 
 % the Sylvester matrix equation AXB^T+ CXD^T= E, ACM Transactions on 
 % Mathematical Software (TOMS), 18(2), 223-231.
+%
+% Note that if B or C are empty, they are assumed to be identity mtrices of the
+% appropriate size. This is more efficient that passing identity matrices.
 % 
 % This Bartels--Stewart solver also takes information xsplit, ysplit so
 % that if possible it decouples the even and odd modes.
@@ -37,10 +40,7 @@ if ( norm(E) < tol )
 end
 
 % Matrices must be sparse for QZ():
-A = full(A);
-B = full(B);
-C = full(C);
-D = full(D);
+A = full(A); B = full(B); C = full(C); D = full(D);
 
 % Solution will be a m by n matrix.
 m = size(A, 1); 
@@ -79,7 +79,7 @@ else
 end
 
 % Now use the generalised Bartels--Stewart solver found in Gardiner et al.
-% (1992).  The Sylvester matrix equation now contains quasi upper-triangular
+% (1992). The Sylvester matrix equation now contains quasi upper-triangular
 % matrices and we can do a backwards substitution.
 
 % transform the righthand side.
@@ -92,41 +92,47 @@ SY = zeros(m);
 
 % Construct columns n,n-1,...,3,2 of the transformed solution.  The first
 % column is treated as special at the end.
-while k > 1
-    % There are two cases, either the subdiagonal contains a zero
-    % T(k,k-1)=0 and then it is a backwards substitution, or T(k,k-1)~=0
-    % and then we solve a 2x2 system instead.
+while ( k > 1 )
+    
+    % There are two cases, either the subdiagonal contains a zero, i.e.,
+    % T(k,k-1) = 0 and then it is simply a backwards substitution, or T(k,k-1)
+    % ~= 0 and we solve a 2x2 system.
     
     if ( T(k,k-1) == 0 )
-        % Simple case (almost always end up here).
+        % Simple case (Usually end up here).
+        
         rhs = F(:,k);
-        if ( k < n )
-            
+        
+        if ( k < n )    
             PY(:,k+1) = P*Y(:,k+1);
-            SY(:,k+1) = S*Y(:,k+1);
-            
+            SY(:,k+1) = S*Y(:,k+1);    
             for jj = k+1:n
                 rhs = rhs - R(k,jj)*PY(:,jj) - T(k,jj)*SY(:,jj);
             end
-            
+            % TODO: This actually seems slower than the FOR loop:
+%             jj = k+1:n;
+%             rhs = rhs - ...
+%                 sum(PY(:,jj)*diag(R(k,jj)), 2) - ...
+%                 sum(SY(:,jj)*diag(T(k,jj)), 2);
         end
         
-        % find the kth column of the transformed solution.
+        % Find the kth column of the transformed solution.
         Y(:,k) = (R(k,k)*P + T(k,k)*S) \ rhs;
         
-        % go to next column
-        k = k-1;
+        % Go to next column
+        k = k - 1;
         
     else
+        
         % This is a straight copy from the Gardiner et al. paper, and just
-        % solves for two columns at once. (works because of
-        % quasi-triangular matrices.
+        % solves for two columns at once. (Works because of quasi-triangular
+        % matrices.)
         
         % Operator reduction.
         rhs1 = F(:,k-1);
         rhs2 = F(:,k);
         
-        for jj = k+1:n
+        for jj = (k + 1):n
             yj = Y(:,jj);
             rhs1 = rhs1 - R(k-1,jj)*P*yj - T(k-1,jj)*S*yj;
             rhs2 = rhs2 - R(k,jj)*P*yj - T(k,jj)*S*yj;
@@ -134,32 +140,31 @@ while k > 1
         
         % 2 by 2 system.
         SM = zeros(2*n);
-        up = 1:n;
-        down = n+1:2*n;
+        top = 1:n;
+        bot = (n+1):(2*n);
         
-        SM(up,up) = R(k-1,k-1)*P + T(k-1,k-1)*S;
-        SM(up,down) = R(k-1,k)*P + T(k-1,k)*S;
-        SM(down,up) = R(k,k-1)*P + T(k,k-1)*S;
-        SM(down,down) = R(k,k)*P + T(k,k)*S;
+        SM(top,top) = R(k-1,k-1)*P + T(k-1,k-1)*S;
+        SM(top,bot) = R(k-1,k)*P + T(k-1,k)*S;
+        SM(bot,top) = R(k,k-1)*P + T(k,k-1)*S;
+        SM(bot,bot) = R(k,k)*P + T(k,k)*S;
         
         % Permute the columns and rows: 
-        Spermuted = zeros(2*n);
-        Spermuted(1:2:2*n,1:2:2*n) = SM(1:n,1:n); 
-        Spermuted(2:2:2*n,2:2:2*n) = SM(n+1:2*n,n+1:2*n); 
+        SPermuted = zeros(2*n);
+        SPermuted(1:2:2*n,1:2:2*n) = SM(1:n,1:n); 
+        SPermuted(2:2:2*n,2:2:2*n) = SM(n+1:2*n,n+1:2*n); 
 
         % Solve.
-        UM = Spermuted \ [rhs1; rhs2];
+        UM = SPermuted \ [rhs1 ; rhs2];
         
-        Y(:,k-1) = UM(up); 
-        Y(:,k) = UM(down);
-
-        PY(:,k) = P*Y(:,k);
+        Y(:,k-1)  = UM(top); 
+        Y(:,k)    = UM(bot);
+        PY(:,k)   = P*Y(:,k);
         PY(:,k-1) = P*Y(:,k-1);
-        SY(:,k) = S*Y(:,k); 
+        SY(:,k)   = S*Y(:,k); 
         SY(:,k-1) = S*Y(:,k-1);
         
         % We solved for two columns so go two columns further.
-        k=k-2;
+        k = k - 2;
         
     end
     
@@ -176,8 +181,7 @@ if ( k == 1 )
     Y(:,1) = (R(1,1)*P + T(1,1)*S) \ rhs;
 end
 
-% We have now computed the transformed solution so we just transform it
-% back.
+% We have now computed the transformed solution so we just transform it back.
 X = Z1*Y*Z2.';
 
 end

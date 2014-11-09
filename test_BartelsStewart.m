@@ -1,61 +1,57 @@
-function pass = test_bartelsStewart( prefs )
+function pass = test_BartelsStewart(  )
 % Test generalized Sylvester matrix equation solver
 
-if ( nargin < 1 )
-    prefs = chebfunpref(); 
-end
-tol = 1e4*prefs.techPrefs.eps;
+tol = 1e-8;
+
+%%
 
 n = 10; 
 rng(0)
-A = rand(n); 
-B = rand(n); 
-C = rand(n); 
-D = rand(n); 
-X = rand(n); 
+A = rand(n); B = rand(n); C = rand(n); D = rand(n); X = rand(n); 
 
 E = A * X * B.' + C * X * D.';
+Y = bartelsStewart(A, B, C, D, E, 0, 0); 
 
-Y = chebop2.bartelsStewart(A, B, C, D, E, 0, 0); 
-pass(1) = norm( Y - X ) < tol; 
+err(1) = norm( Y - X );
+pass(1) = err(1) < tol; 
 
+%%
 
-A = rand(n) + 1i*rand(n); 
-B = rand(n) + 1i*rand(n); 
-C = rand(n) + 1i*rand(n); 
-D = rand(n) + 1i*rand(n); 
-X = rand(n) + 1i*rand(n); 
+A = rand(n) + 1i*rand(n); B = rand(n) + 1i*rand(n); 
+C = rand(n) + 1i*rand(n); D = rand(n) + 1i*rand(n); 
+X = rand(n) + 1i*rand(n);
 
 E = A * X * B.' + C * X * D.';
+Y = bartelsStewart(A, B, C, D, E, 0, 0); 
 
-Y = chebop2.bartelsStewart(A, B, C, D, E, 0, 0); 
-pass(2) = norm( Y - X ) < 10*tol; 
+err(2) = norm( Y - X );
+pass(2) = err(2) < tol; 
 
+%%
 
-tol = 1000*tol; 
 n = 100; 
-rng(0)
-A = rand(n); 
-B = rand(n); 
-C = rand(n); 
-D = rand(n); 
-X = rand(n); 
+A = rand(n); B = rand(n); C = rand(n); D = rand(n); X = rand(n); 
 
 E = A * X * B.' + C * X * D.';
+Y = bartelsStewart(A, B, C, D, E, 0, 0); 
 
-Y = chebop2.bartelsStewart(A, B, C, D, E, 0, 0); 
-pass(3) = norm( Y - X ) < 10*tol; 
+err(3) = norm( Y - X );
+pass(3) = err(3) < tol; 
 
+%%
 
-A = rand(n) + 1i*rand(n); 
-B = rand(n) + 1i*rand(n); 
-C = rand(n) + 1i*rand(n); 
-D = rand(n) + 1i*rand(n); 
+A = rand(n) + 1i*rand(n); B = rand(n) + 1i*rand(n); 
+C = rand(n) + 1i*rand(n); D = rand(n) + 1i*rand(n); 
 X = rand(n) + 1i*rand(n); 
 
 E = A * X * B.' + C * X * D.';
+Y = bartelsStewart(A, B, C, D, E, 0, 0); 
 
-Y = chebop2.bartelsStewart(A, B, C, D, E, 0, 0); 
-pass(4) = norm( Y - X ) < 10*tol; 
+err(4) = norm( Y - X );
+pass(4) = err(4) < tol; 
+
+%%
+
+% err.'
 
 end

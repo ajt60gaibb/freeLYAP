@@ -14,7 +14,7 @@ try
     err = zeros(2, 3);
     for j = 1:2
 
-        seedRNG(0)
+        rng(0)
         A = rand(n) + c(j)*1i*rand(n);
         B = rand(n) + c(j)*1i*rand(n);
         C = rand(n) + c(j)*1i*rand(n);

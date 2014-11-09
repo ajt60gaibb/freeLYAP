@@ -4,8 +4,8 @@ function X = lyap(A, B, C, E)
 %   LYAP() aims to mirror the functionality of the LYAP() fnuction in the MATLAB
 %   Control Toolbox. It is written entirely in MATLAB and so is a little slower
 %   than the implementation in the Control Toobox (which is essentially a
-%   wrapper to LAPACK). However it is a little more flexible. For solving
-%   completely generalised Lyaponov equations, see bartelsStewart.m.
+%   wrapper for an LAPACK routine). However it is a little more flexible. For
+%   solving completely generalised Lyaponov equations, see bartelsStewart.m.
 %
 %   X = LYAP(A,Q) solves the Lyapunov matrix equation:
 %
@@ -32,13 +32,13 @@ function X = lyap(A, B, C, E)
 
 if ( nargin == 2 )
     % A*X + X*A' + B = 0
-    IA = eye(size(A));
+    IA = [];
     X = bartelsStewart(A, IA, IA, conj(A), -B, false, false);
     
 elseif ( nargin == 3 )
     % A*X + X*B + C = 0
-    IA = eye(size(A));
-    IB = eye(size(B));
+    IA = [];
+    IB = [];
     X = bartelsStewart(A, IA, IB.', B.', -C, false, false);
     
 else
