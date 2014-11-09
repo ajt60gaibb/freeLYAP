@@ -39,6 +39,11 @@ if ( norm(E) < tol )
     return
 end
 
+if ( isempty(B) && isempty(C) )
+    X = bs1(A, D, E);
+    return
+end
+
 % Matrices must be sparse for QZ():
 A = full(A); B = full(B); C = full(C); D = full(D);
 
@@ -69,7 +74,6 @@ S = triu(S);
 % double as many subproblems.
 if ( isempty(B) )
     [Z2, T] = schur(D, 'complex');
-%     [Z2, T] = schur(D);
     Q2 = Z2';
 %     R = speye(m, n);
     R = eye(m, n);
@@ -244,5 +248,39 @@ Q(bot,2:2:end) = Q2;
 Z = zeros(n);
 Z(1:2:end,top) = Z1; 
 Z(2:2:end,bot) = Z2;
+
+end
+
+
+function X = bs1(A, D, E)
+
+m = size(A, 1); 
+n = size(D, 2); 
+
+[Z1, P] = schur(A, 'complex');
+
+if ( ~all(A == D) )
+    [Z2, T] = schur(D, 'complex');
+else
+    Z2 = Z1;
+    T = P;
+end
+
+I = speye(m, n);
+Y = zeros(m, n);
+
+% Transform the righthand side.
+F = Z1'*E*conj(Z2);
+
+% Do a backwards substitution to construct the transformed solution.
+for k = n:-1:1
+    jj = (k+1):n;
+    rhs = F(:,k) - Y(:,jj)*T(k,jj).';
+    % Find the kth column of the transformed solution.
+    Y(:,k) = (P + T(k,k)*I) \ rhs;
+end
+
+% We have now computed the transformed solution so we just transform it back.
+X = Z1*Y*Z2.';
 
 end
