@@ -104,26 +104,23 @@ while ( k > 1 )
     % There are two cases, either the subdiagonal contains a zero, i.e.,
     % T(k,k-1) = 0 and then it is simply a backwards substitution, or T(k,k-1)
     % ~= 0 and we solve a 2x2 system.
+    
     if ( T(k,k-1) == 0 )
         % Simple case (Usually end up here).
-        
-        rhs = F(:,k);
         
         if ( k < n )    
             PY(:,k+1) = P*Y(:,k+1);
             SY(:,k+1) = S*Y(:,k+1);    
-            for jj = k+1:n
-                rhs = rhs - R(k,jj)*PY(:,jj) - T(k,jj)*SY(:,jj);
-            end
-            % TODO: This actually seems slower than the FOR loop:
-%             jj = k+1:n;
-%             rhs = rhs - ...
-%                 sum(PY(:,jj)*diag(R(k,jj)), 2) - ...
-%                 sum(SY(:,jj)*diag(T(k,jj)), 2);
-        end
+            jj = (k+1):n;
+            rhs = F(:,k) - PY(:,jj)*R(k,jj).' - SY(:,jj)*T(k,jj).';
+        else
+            rhs = F(:,k);
+        end 
         
         % Find the kth column of the transformed solution.
-        Y(:,k) = (R(k,k)*P + T(k,k)*S) \ rhs;
+        tmp = (P + (T(k,k)/R(k,k))*S); % <- Divide both sides by R_kk for speed.
+        rhs = rhs/R(k,k);
+        Y(:,k) = tmp \ rhs;
         
         % Go to next column
         k = k - 1;
@@ -182,12 +179,10 @@ end
 
 if ( k == 1 )
     % Now we have just the first column to compute.
-    rhs = F(:,1);
     PY(:,2) = P*Y(:,2);
     SY(:,2) = S*Y(:,2);
-    for jj = 2:n
-        rhs = rhs - R(1,jj)*PY(:,jj) - T(1,jj)*SY(:,jj);
-    end
+    jj = 2:n;
+    rhs = F(:,1)  - PY(:,jj)*R(1,jj).' - SY(:,jj)*T(1,jj).';
     Y(:,1) = (R(1,1)*P + T(1,1)*S) \ rhs;
 end
 
@@ -227,30 +222,32 @@ function [P, S, Q, Z] = reform(P1, P2, S1, S2, Q1, Q2, Z1, Z2)
 % Determine the indedxing:
 hf1 = size(P1, 1);
 n   = 2*hf1 - 1;
+
 top = 1:hf1;
 bot = (hf1+1):n;
+odd  = 1:2:n;
+even = 2:2:n;
 
 % Push the subproblem back together:
 P = blkdiag(P1, P2);
-P = zeros(n);
-P(top,top) = P1; 
-P(bot,bot) = P2;
+% P = zeros(n);
+% P(top,top) = P1; 
+% P(bot,bot) = P2;
 
-S = zeros(n);
-S(top,top) = S1; 
-S(bot,bot) = S2;
-P = blkdiag(P1, P2);
+S = blkdiag(S1, S2);
+% S = zeros(n);
+% S(top,top) = S1; 
+% S(bot,bot) = S2;
 
 Q = zeros(n);
-Q(top,1:2:end) = Q1; 
-Q(bot,2:2:end) = Q2;
+Q(top,odd) = Q1; 
+Q(bot,even) = Q2;
 
 Z = zeros(n);
-Z(1:2:end,top) = Z1; 
-Z(2:2:end,bot) = Z2;
+Z(odd, top) = Z1; 
+Z(even,bot) = Z2;
 
 end
-
 
 function X = sylv(A, D, E)
 %SYLV  Solve Sylvester matrix equation.
@@ -261,17 +258,17 @@ function X = sylv(A, D, E)
 
 % TODO: Need to be more careful about ^T vs ^* and +/- E in definition.
 
-% Get sizes
+% Get sizes:
 m = size(A, 1); 
 n = size(D, 2); 
 
 % Compute Schur factorizations. (P and T will be upper triangular.)
-[Z1, P] = schur(A, 'complex');
+[Z1, P] = schur(A);
 if ( ~isempty(D) )
     [Z2, T] = schur(D, 'complex');
 else
-%     D = conj(A).
-%     [Z2, T] = schur(D, 'complex');
+    % D = conj(A).
+    % [Z2, T] = schur(D, 'complex');
     Z2 = conj(Z1);
     T = conj(P);
     n = size(A, 2);
