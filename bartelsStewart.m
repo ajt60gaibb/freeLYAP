@@ -9,7 +9,7 @@ function X = bartelsStewart(A, B, C, D, E, xSplit, ySplit, tol)
 %
 % J. D. Gardiner, A. J. Laub, J. J. Amato, & C. B. Moler, Solution of the
 % Sylvester matrix equation AXB^T + CXD^T = E, ACM Transactions on Mathematical
-% Software (TOMS), 18(2), 223-231.
+% Software (TOMS), 18(2), 223-231, 1992.
 %
 % Note that if B or C are empty, they are assumed to be identity mtrices of the
 % appropriate size. This is more efficient that passing identity matrices.
@@ -56,7 +56,8 @@ Y = zeros(m, n);
 % If the equation is even/odd in the x-direction then we can split the problem
 % into two subproblems.
 if ( isempty(C) )
-    [Z1, P] = schur(A, 'complex');
+%     [Z1, P] = schur(A, 'complex');
+    [Z1, P] = schur(A);
     Q1 = Z1';
 %     S = speye(n, m);
     S = eye(n, m);
@@ -66,15 +67,17 @@ elseif ( ySplit )
 else
     [P, S, Q1, Z1] = qz(A, C);  
 end
+
 % We enforce P and S as upper triangular because they should be (up to rounding
 % errors) and we need to do back substitution with them.
-P = triu(P); 
-S = triu(S);
+% P = triu(P); 
+% S = triu(S);
 
 % If the PDE is even/odd in the y-direction then we can split (further) into
 % double as many subproblems.
 if ( isempty(B) )
-    [Z2, T] = schur(D, 'complex');
+%     [Z2, T] = schur(D, 'complex');
+    [Z2, T] = schur(D);
     Q2 = Z2';
 %     R = speye(m, n);
     R = eye(m, n);
@@ -146,15 +149,9 @@ while ( k > 1 )
         
         % 2 by 2 system.
         top = 1:n;
-        bot = (n+1):(2*n);
-%         SM = zeros(2*n);
-%         SM(top,top) = R(k-1,k-1)*P + T(k-1,k-1)*S;
-%         SM(top,bot) = R(k-1,k)*P + T(k-1,k)*S;
-%         SM(bot,top) = R(k,k-1)*P + T(k,k-1)*S;
-%         SM(bot,bot) = R(k,k)*P + T(k,k)*S;
-
+        bot = (n+1):(2*n);        
         SM = [R(k-1,k-1)*P + T(k-1,k-1)*S , R(k-1,k)*P + T(k-1,k)*S ;
-              R(k,k-1)*P + T(k,k-1)*S     , R(k,k)*P + T(k,k)*S     ];
+              T(k,k-1)*S                  , R(k,k)*P + T(k,k)*S     ];
           
 %         % Permute the columns and rows: 
 %         SPermuted = zeros(2*n);
