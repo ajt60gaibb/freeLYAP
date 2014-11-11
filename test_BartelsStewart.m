@@ -1,4 +1,4 @@
-% function pass = test_BartelsStewart(  )
+function pass = test_BartelsStewart(  )
 % Test generalized Sylvester matrix equation solver
 
 tol = 1e-8;
@@ -59,4 +59,4 @@ pass(4) = err(4) < tol;
 
 % err.'
 
-% end
+end
