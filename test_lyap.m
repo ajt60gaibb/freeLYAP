@@ -3,27 +3,29 @@ function pass = test_lyap()
 % Test LYAP against the built-in (i.e., Control Toolbox) implementation.
 
 tol = 1e-10;
-n = 10;
+n = 9;
+m = n+1;
 
 currDir = cd;
 lyapDir = fileparts(which('sylvslv'));
 
 try
 
-    c = [0, 1];
+    c = [0, 1, 0, 1];
     err = zeros(2, 3);
     for j = 1:2
 
         rng(0)
         A = rand(n) + c(j)*1i*rand(n);
-        B = rand(n) + c(j)*1i*rand(n);
-        C = rand(n) + c(j)*1i*rand(n);
+        Q = rand(n) + c(j)*1i*rand(n);
+        B = rand(m) + c(j)*1i*rand(m);
+        C = rand(n,m) + c(j)*1i*rand(n,m);
         E = rand(n) + c(j)*1i*rand(n);
 
         cd(lyapDir)
-        U = lyap(A, B);
+        U = lyap(A, Q);
         cd(currDir)
-        V = lyap(A, B);
+        V = lyap(A, Q);
         err(j,1) = norm(U - V, inf);
 
         cd(lyapDir)
@@ -33,14 +35,14 @@ try
         err(j,2) = norm(U - V, inf);
 
         % Built-in LYAP is fussy in this mode:
-        B = B + B';
+        Q = Q + Q';
         E = real(E);
         A = real(A);
-        B = real(B);
+        Q = real(Q);
         cd(lyapDir)
-        U = lyap(A, B, [], E);
+        U = lyap(A, Q, [], E);
         cd(currDir)
-        V = lyap(A, B, [], E);
+        V = lyap(A, Q, [], E);
         err(j,3) = norm(U - V, inf);
 
     end
