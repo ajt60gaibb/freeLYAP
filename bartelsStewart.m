@@ -40,8 +40,7 @@ if ( norm(E) < tol )
 end
 
 if ( isempty(B) && isempty(C) )
-%     X = sylv(A, D, E);
-    X = lyap(A, D, E);
+    X = lyap(A, D.', -E);
     return
 end
 
@@ -59,7 +58,6 @@ if ( isempty(C) )
 %     [Z1, P] = schur(A, 'complex');
     [Z1, P] = schur(A);
     Q1 = Z1';
-%     S = speye(n, m);
     S = eye(n, m);
 elseif ( ySplit )
     % This is equivalent to qz(A,C), but faster.
@@ -79,7 +77,6 @@ if ( isempty(B) )
 %     [Z2, T] = schur(D, 'complex');
     [Z2, T] = schur(D);
     Q2 = Z2';
-%     R = speye(m, n);
     R = eye(m, n);
 elseif ( xSplit )
     % Faster QZ when even/odd modes decouple in x-direction: 
@@ -112,21 +109,19 @@ while ( k > 1 )
     if ( T(k,k-1) == 0 )
         % Simple case (Usually end up here).
         
-        if ( k < n )    
-            PY(:,k+1) = P*Y(:,k+1);
-            SY(:,k+1) = S*Y(:,k+1);    
-            jj = (k+1):n;
-            rhs = F(:,k) - PY(:,jj)*R(k,jj).' - SY(:,jj)*T(k,jj).';
-        else
-            rhs = F(:,k);
-        end 
+        jj = (k+1):n;
+        rhs = F(:,k) - PY(:,jj)*R(k,jj).' - SY(:,jj)*T(k,jj).';
         
         % Find the kth column of the transformed solution.
         tmp = (P + (T(k,k)/R(k,k))*S); % <- Divide both sides by R_kk for speed.
         rhs = rhs/R(k,k);
         Y(:,k) = tmp \ rhs;
         
-        % Go to next column
+        % Store:
+        PY(:,k) = P*Y(:,k);
+        SY(:,k) = S*Y(:,k);
+        
+        % Go to next column:
         k = k - 1;
         
     else
@@ -136,37 +131,29 @@ while ( k > 1 )
         % matrices.)
         
         % Operator reduction.
-        rhs1 = F(:,k-1);
-        rhs2 = F(:,k);
-        
-        for jj = (k+1):n
-            yj = Y(:,jj);
-            Pyj = P*yj;
-            Syj = S*yj;
-            rhs1 = rhs1 - R(k-1,jj)*Pyj - T(k-1,jj)*Syj;
-            rhs2 = rhs2 - R(k,jj)*Pyj - T(k,jj)*Syj;
-        end
-        
+        jj = (k+1):n;
+        rhs1 = F(:,k-1) - PY(:,jj)*R(k-1,jj).' - SY(:,jj)*T(k-1,jj).';
+        rhs2 = F(:,k)   - PY(:,jj)*R(k,jj).'   - SY(:,jj)*T(k,jj).';
+
         % 2 by 2 system.
-        top = 1:n;
-        bot = (n+1):(2*n);        
         SM = [R(k-1,k-1)*P + T(k-1,k-1)*S , R(k-1,k)*P + T(k-1,k)*S ;
               T(k,k-1)*S                  , R(k,k)*P + T(k,k)*S     ];
-          
-%         % Permute the columns and rows: 
-%         SPermuted = zeros(2*n);
-%         SPermuted(1:2:2*n,1:2:2*n) = SM(top, top); 
-%         SPermuted(2:2:2*n,2:2:2*n) = SM(bot, bot);
-
+        
         % Solve.
         UM = SM \ [rhs1 ; rhs2];
         
-        Y(:,k-1)  = UM(top); 
-        Y(:,k)    = UM(bot);
-        PY(:,k)   = P*Y(:,k);
-        PY(:,k-1) = P*Y(:,k-1);
-        SY(:,k)   = S*Y(:,k); 
-        SY(:,k-1) = S*Y(:,k-1);
+%         % Permute the columns and rows: (Is this right??)
+%         idx = reshape([(1:n) ; (n+1:2*n)], 2*n, 1);
+%         SM(idx,idx) = SM;
+%         rhs = [rhs1 ; rhs2];
+%         rhs(idx) = rhs;
+%         UM = SM \ rhs;
+%         UM = UM(idx);
+        
+        % Store:
+        Y(:,k-1:k) = reshape(UM, n, 2);
+        PY(:,k-1:k) = P*Y(:,k-1:k);
+        SY(:,k-1:k) = S*Y(:,k-1:k);
 
         % We solved for two columns so go two columns further.
         k = k - 2;
@@ -180,7 +167,7 @@ if ( k == 1 )
     PY(:,2) = P*Y(:,2);
     SY(:,2) = S*Y(:,2);
     jj = 2:n;
-    rhs = F(:,1)  - PY(:,jj)*R(1,jj).' - SY(:,jj)*T(1,jj).';
+    rhs = F(:,1) - PY(:,jj)*R(1,jj).' - SY(:,jj)*T(1,jj).';
     Y(:,1) = (R(1,1)*P + T(1,1)*S) \ rhs;
 end
 
