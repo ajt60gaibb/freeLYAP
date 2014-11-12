@@ -66,8 +66,7 @@ function X = sylv(A, B, C)
 % Nick Hale, Nov 2014. (nick.p.hale@gmail.com)
 
 % Get sizes:
-m = size(A, 1); 
-n = size(B, 1); 
+[m, n] = size(C); 
 
 % Compute Schur factorizations. (P and T will be upper triangular.)
 [Z1, P] = schur(A, 'complex');
