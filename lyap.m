@@ -47,7 +47,7 @@ elseif ( nargin == 3 )
     
 else
     % A*X*E' + E*X*A' + B = 0
-    X = bartelsStewart(A, E, E, A, -B, false, false);
+    X = bartelsStewart(A, E, E, A, -B);
     if ( isreal(A) && isreal(B) && isreal(E) )
         X = real(X);
     end

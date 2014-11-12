@@ -5,9 +5,9 @@ tol = 1e-8;
 
 %%
 
-n = 10; 
+n = 10; m = n-1;
 rng(0)
-A = rand(n); B = rand(n); C = rand(n); D = rand(n); X = rand(n); 
+A = rand(m); B = rand(n); C = rand(m); D = rand(n); X = rand(m,n); 
 
 E = A * X * B.' + C * X * D.';
 Y = bartelsStewart(A, B, C, D, E); 
@@ -17,9 +17,9 @@ pass(1) = err(1) < tol;
 
 %%
 
-A = rand(n) + 1i*rand(n); B = rand(n) + 1i*rand(n); 
-C = rand(n) + 1i*rand(n); D = rand(n) + 1i*rand(n); 
-X = rand(n) + 1i*rand(n);
+A = rand(m) + 1i*rand(m); B = rand(n) + 1i*rand(n); 
+C = rand(m) + 1i*rand(m); D = rand(n) + 1i*rand(n); 
+X = rand(m,n) + 1i*rand(m,n);
 
 E = A * X * B.' + C * X * D.';
 Y = bartelsStewart(A, B, C, D, E); 
@@ -29,11 +29,11 @@ pass(2) = err(2) < tol;
 
 %%
 
-A = rand(n); 
+A = rand(m); 
 B = eye(n); 
-C = eye(n);
+C = eye(m);
 D = rand(n); 
-X = rand(n);
+X = rand(m,n);
 
 E = A * X * B.' + C * X * D.';
 Y = bartelsStewart(A, [], [], D, E); 
@@ -43,11 +43,11 @@ pass(3) = err(3) < tol;
 
 %%
 
-A = rand(n) + 1i*rand(n); 
+A = rand(m) + 1i*rand(m); 
 B = eye(n); 
-C = eye(n);
+C = eye(m);
 D = rand(n) + 1i*rand(n); 
-X = rand(n) + 1i*rand(n);
+X = rand(m,n) + 1i*rand(m,n);
 
 E = A * X * B.' + C * X * D.';
 Y = bartelsStewart(A, [], [], D, E); 
