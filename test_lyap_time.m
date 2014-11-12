@@ -22,7 +22,6 @@ for k = 1:loop
     U = lyap(A, Q);
 end
 toc
-%%
 cd(currDir)
 fprintf('new real AQ:\n')
 tic

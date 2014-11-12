@@ -50,8 +50,7 @@ end
 A = full(A); B = full(B); C = full(C); D = full(D);
 
 % Solution will be a m by n matrix.
-m = size(A, 1); 
-n = size(D, 2); 
+[m, n] = size(E);
 Y = zeros(m, n);
 
 % If the equation is even/odd in the x-direction then we can split the problem
@@ -60,7 +59,7 @@ if ( isempty(C) )
 %     [Z1, P] = schur(A, 'complex');
     [Z1, P] = schur(A);
     Q1 = Z1';
-    S = eye(n, m);
+    S = eye(m,m);
 elseif ( split(2) )
     % This is equivalent to qz(A,C), but faster.
     [P, S, Q1, Z1] = qzSplit(A, C); 
@@ -68,18 +67,13 @@ else
     [P, S, Q1, Z1] = qz(A, C);  
 end
 
-% We enforce P and S as upper triangular because they should be (up to rounding
-% errors) and we need to do back substitution with them.
-% P = triu(P); 
-% S = triu(S);
-
 % If the PDE is even/odd in the y-direction then we can split (further) into
 % double as many subproblems.
 if ( isempty(B) )
 %     [Z2, T] = schur(D, 'complex');
     [Z2, T] = schur(D);
     Q2 = Z2';
-    R = eye(m, n);
+    R = eye(n, n);
 elseif ( split(1) )
     % Faster QZ when even/odd modes decouple in x-direction: 
     [T, R, Q2, Z2] = qzSplit(D, B);
@@ -114,6 +108,7 @@ while ( k > 0 )
         
         jj = (k+1):n;
         rhs = F(:,k) - PY(:,jj)*R(k,jj).' - SY(:,jj)*T(k,jj).';
+%         rhs = F(:,k) - PY*R(k,:).' - SY*T(k,:).';
         
         % Find the kth column of the transformed solution.
         tmp = (P + (T(k,k)/R(k,k))*S); % <- Divide both sides by R_kk for speed.
@@ -141,18 +136,18 @@ while ( k > 0 )
         % 2 by 2 system.
         SM = [R(k-1,k-1)*P + T(k-1,k-1)*S , R(k-1,k)*P + T(k-1,k)*S ;
               T(k,k-1)*S                  , R(k,k)*P + T(k,k)*S     ];
-        
+          
         % Solve.
 %         UM = SM \ [rhs1 ; rhs2];
 
         % Solve (permute the columns and rows):
-        idx = reshape([(1:n) ; (n+1:2*n)], 2*n, 1);
+        idx = reshape([(1:m) ; (m+1:2*m)], 2*m, 1);
         rhs = [rhs1 ; rhs2];
         UM = SM(idx,idx) \ rhs(idx);
         UM(idx) = UM;
         
         % Store S*Y and P*Y factors:
-        Y(:,k-1:k) = reshape(UM, n, 2);
+        Y(:,k-1:k) = reshape(UM, m, 2);
         PY(:,k-1:k) = P*Y(:,k-1:k);
         SY(:,k-1:k) = S*Y(:,k-1:k);
 

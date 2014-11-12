@@ -88,12 +88,19 @@ F = Z1'*C*conj(Z2); % <-- Not sure why conj() is needed here.
 I = speye(size(P));
 Y = zeros(m, n);
 
+% Diagonal mask (for speed in shifted solves):
+idx = diag(true(length(P),1));
+p = diag(P);
+
 % Do a backwards substitution to construct the transformed solution.
 for k = n:-1:1
-    jj = (k+1):n;
-    rhs = F(:,k) + Y(:,jj)*T(k,jj).';
+%     jj = (k+1):n;
+%     rhs = F(:,k) + Y(:,jj)*T(k,jj).';
+    rhs = F(:,k) + Y*T(k,:).'; % <-- More efficient multiplication.
     % Find the kth column of the transformed solution.
-    Y(:,k) = (P + T(k,k)*I) \ (-rhs);
+%     Y(:,k) = (P + T(k,k)*I) \ (-rhs);
+    P(idx) = p + T(k,k);       % <-- Diagonal shift. More efficient this way.
+    Y(:,k) = P \ (-rhs);
 end
 
 % Transform solution back:
