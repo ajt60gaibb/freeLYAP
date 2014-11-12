@@ -1,6 +1,5 @@
 function X = lyap(A, B, C, E)
 %LYAP  Solve continuous-time Lyapunov equations.
-%
 %   LYAP() aims to mirror the functionality and syntax of the LYAP() function in
 %   the MATLAB Control Toolbox. It is written entirely in MATLAB and so is a
 %   little slower than the implementation in the Control Toobox (which is
@@ -28,7 +27,9 @@ function X = lyap(A, B, C, E)
 %
 % See also BARTELSSTEWART.
 
-% Alex Townsend & Nick Hale, Nov 2014.
+% Nick Hale, Nov 2014. (nick.p.hale@gmail.com)
+
+% TODO: Balancing?
 
 if ( nargin == 2 )
     % A*X + X*A' + B = 0
@@ -62,7 +63,7 @@ function X = sylv(A, B, C)
 %   SYLV(A, [], C) solves the Lyapunov matrix equation
 %       A*X + X*A' + C = 0.
 
-% Alex Townsend & Nick Hale, Nov 2014.
+% Nick Hale, Nov 2014. (nick.p.hale@gmail.com)
 
 % Get sizes:
 m = size(A, 1); 
