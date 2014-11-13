@@ -1,23 +1,23 @@
 function X = bartelsStewart(A, B, C, D, E, split)
-%BARTELSSTEWART   Solution to generalized Sylvester matrix equation. 
-% 
-% BARTELSSTEWART(A, B, C, D, E) computes the solution to the Sylvester equation
+%BARTELSSTEWART  Solve generalized Sylvester matrix equation. 
+%   BARTELSSTEWART(A, B, C, D, E) solves the generalized Sylvester equation
 %
 %         AXB^T + CXD^T = E
 %
-% by using the Bartels--Stewart algorithm [1].
+%   using the Bartels--Stewart algorithm [1].
 %
-% If B or C are empty, they are assumed to be identity matrices of the
-% appropriate size. This is more efficient that passing identity matrices.
+%   BARTELSSTEWART(A, [], [], D, E) assumes B = I and C = I. This allows more
+%   efficient computation than passing identity matrices. Similarly,
+%   BARTELSSTEWART(A, B, [], [], E) assumes C = B and D = A.
 % 
-% BARTELSSTEWART(A, B, C, D, E, SPLIT, YSPLIT) also takes information XSPLIT,
-% YSPLIT which state whether or not the problem may be decoupled into even and
-% odd modes for efficiency.
+%   BARTELSSTEWART(A, B, C, D, E, SPLIT) also takes information SPLIT which
+%   states whether or not the problem may be decoupled into even and odd modes
+%   for efficiency.
 %
-% References:
-%  [1] J. D. Gardiner, A. J. Laub, J. J. Amato, & C. B. Moler, Solution of the
-%  Sylvester matrix equation AXB^T + CXD^T = E, ACM Transactions on Mathematical
-%  Software (TOMS), 18(2), 223-231, 1992.
+%   References:
+%    [1] J. D. Gardiner, A. J. Laub, J. J. Amato, & C. B. Moler, Solution of the
+%    Sylvester matrix equation AXB^T + CXD^T = E, ACM Transactions on
+%    Mathematical Software (TOMS), 18(2), 223-231, 1992.
 
 % Copyright 2014 by The University of Oxford and The Chebfun2 Developers.
 % See http://www.chebfun.org/ for Chebfun information.
@@ -46,39 +46,49 @@ if ( isempty(B) && isempty(C) )
     return
 end
 
-% Matrices must be sparse for QZ():
+% Matrices must be full for QZ():
 A = full(A); B = full(B); C = full(C); D = full(D);
 
 % Solution will be a m by n matrix.
 [m, n] = size(E);
 Y = zeros(m, n);
 
-% If the equation is even/odd in the x-direction then we can split the problem
-% into two subproblems.
+% Look for problems of the form AXB^T + BXA^T = E
+if ( isempty(C) && isempty(D) )
+    AEQ = true;
+    C = B;
+else
+    AEQ = false;
+end
+
 if ( isempty(C) )
-%     [Z1, P] = schur(A, 'complex');
+    % [Z1, P] = schur(A, 'complex');
     [Z1, P] = schur(A);
     Q1 = Z1';
-    S = eye(m,m);
+    S = eye(m);
 elseif ( split(2) )
-    % This is equivalent to qz(A,C), but faster.
+    % If the equation is even/odd in the x-direction then we can split the
+    % problem into two subproblems. This is equivalent to qz(A,C), but faster.
     [P, S, Q1, Z1] = qzSplit(A, C); 
 else
     [P, S, Q1, Z1] = qz(A, C);  
 end
 
-% If the PDE is even/odd in the y-direction then we can split (further) into
-% double as many subproblems.
-if ( isempty(B) )
+if ( AEQ )
+    T = P;
+    R = S;
+    Q2 = Q1;
+    Z2 = Z1;
+elseif ( isempty(B) )
 %     [Z2, T] = schur(D, 'complex');
     [Z2, T] = schur(D);
     Q2 = Z2';
-    R = eye(n, n);
+    R = eye(n);
 elseif ( split(1) )
-    % Faster QZ when even/odd modes decouple in x-direction: 
+    % If the PDE is even/odd in the y-direction then we can split (further) into
+    % double as many subproblems.
     [T, R, Q2, Z2] = qzSplit(D, B);
 else
-    % QZ does not take matrices in sparse format:
     [T, R, Q2, Z2] = qz(D, B);
 end
 
