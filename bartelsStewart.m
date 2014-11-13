@@ -4,7 +4,7 @@ function X = bartelsStewart(A, B, C, D, E, split)
 %
 %         AXB^T + CXD^T = E
 %
-%   using the Bartels--Stewart algorithm [1].
+%   using the Bartels--Stewart algorithm [1,2].
 %
 %   BARTELSSTEWART(A, [], [], D, E) assumes B = I and C = I. This allows more
 %   efficient computation than passing identity matrices. Similarly,
@@ -15,14 +15,16 @@ function X = bartelsStewart(A, B, C, D, E, split)
 %   for efficiency.
 %
 %   References:
-%    [1] J. D. Gardiner, A. J. Laub, J. J. Amato, & C. B. Moler, Solution of the
+%    [1] R. H. Bartels & G. W. Stewart, Solution of the matrix equation 
+%    AX +XB = C, Comm. ACM, 15, 820–826, 1972.
+% 
+%    [2] J. D. Gardiner, A. J. Laub, J. J. Amato, & C. B. Moler, Solution of the
 %    Sylvester matrix equation AXB^T + CXD^T = E, ACM Transactions on
 %    Mathematical Software (TOMS), 18(2), 223-231, 1992.
 
-% Copyright 2014 by The University of Oxford and The Chebfun2 Developers.
-% See http://www.chebfun.org/ for Chebfun information.
+% Copyright 2014
 
-% Written by Alex Townsend, ??? 2014
+% Written by Alex Townsend, Sept 2012. (alex.townsend1987@gmail.com)
 % Modified by Nick Hale, Nov 2014. (nick.p.hale@gmail.com)
 
 % Parse inputs:
