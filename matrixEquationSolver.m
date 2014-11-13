@@ -18,19 +18,22 @@ function X = matrixEquationSolver(A, B, F)
 maxSize = 5000; 
 
 if ( ~isa(A, 'cell') || ~isa(B, 'cell') ) 
-    error(''); 
+    error('MATRIXEQUATIONSOLVER:INPUTS:CELL',...
+                      'Defining matrices are not in a cell array.'); 
 end
 
 % Check that the sizes of the cell arrays are consistent: 
 if ( size(A) ~= size(B) ) 
-    error(''); 
+    error('MATRIXEQUATIONSOLVER:INPUTS:SQUARE', ...
+                       'Ambigous number of terms in the matrix equation.'); 
 end 
 
 % All the matrices should be square and of the same size: 
 [mA, nA] = size( A{ 1 } ); 
 [mB, nB] = size( B{ 1 } ); 
 if ( (mA ~= nA) || (mB ~= nB) )
-    error(''); 
+    error('MATRIXEQUATIONSOLVER:INPUTS:SIZES', ...
+                           'Rectangular matrices are not allowed.'); 
 end
 
 % If we have two terms, then use bartelsStewart: 
@@ -45,7 +48,8 @@ else
     
     % Check that the matrices are not too large: 
     if ( nA * nB > maxSize ) 
-        error('');
+        error('MATRIXEQUATIONSOLVER:MEMORY', ... 
+                                  'A very large matrix will be formed.' );
     end
 
     % Form the large nA x nB matrix: 
