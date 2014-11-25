@@ -73,37 +73,32 @@ function X = sylv(A, B, C)
 [Z1, P] = schur(A, 'complex');
 if ( ~isempty(B) )
     [Z2, T] = schur(B.', 'complex');
+    Z2 = conj(Z2);
 else
-    % B = A';
-    % [Z2, T] = schur(B.', 'complex');
-    Z2 = conj(Z1);
-    T = conj(P);
+    Z2 = Z1;
+    T = P;
     n = size(A, 2);
 end
 
 % Transform the righthand side.
-F = Z1'*C*conj(Z2); % <-- Not sure why conj() is needed here.
+F = Z1'*C*Z2;
 
-% Initialise identity matrix and storage for transformed solution.
-I = speye(size(P));
+% Initialise storage for transformed solution.
 Y = zeros(m, n);
 
 % Diagonal mask (for speed in shifted solves):
-idx = diag(true(length(P),1));
+idx = diag(true(m, 1));
 p = diag(P);
 
 % Do a backwards substitution to construct the transformed solution.
 for k = n:-1:1
-%     jj = (k+1):n;
-%     rhs = F(:,k) + Y(:,jj)*T(k,jj).';
     rhs = F(:,k) + Y*T(k,:).'; % <-- More efficient multiplication.
     % Find the kth column of the transformed solution.
-%     Y(:,k) = (P + T(k,k)*I) \ (-rhs);
     P(idx) = p + T(k,k);       % <-- Diagonal shift. More efficient this way.
     Y(:,k) = P \ (-rhs);
 end
 
 % Transform solution back:
-X = Z1*Y*Z2.';
+X = Z1*Y*Z2';
 
 end
