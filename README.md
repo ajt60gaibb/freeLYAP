@@ -1,4 +1,4 @@
-openLYAP
+freeLYAP
 ====================
 
 
