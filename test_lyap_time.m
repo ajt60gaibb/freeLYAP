@@ -111,3 +111,49 @@ for k = 1:loop
     U = lyap(A, B, C);
 end
 toc
+
+disp(' ')
+
+%%
+
+rng(0)
+A = rand(n) + 1i*rand(n); Q = rand(n) + 1i*rand(n);
+B = rand(n) + 1i*rand(n); C = rand(n) + 1i*rand(n);
+
+cd(lyapDir)
+fprintf('built-in complex A(A.'')C:\n')
+tic
+for k = 1:loop
+    U = lyap(A, A.', C);
+end
+toc
+cd(currDir)
+fprintf('new complex A(A.'')C:\n')
+tic
+for k = 1:loop
+    U = lyap(A, A.', C);
+end
+toc
+
+disp(' ')
+
+%%
+
+rng(0)
+A = schur(A, 'complex');
+
+cd(lyapDir)
+fprintf('built-in complex A(A.'')C with precomputed Schur:\n')
+tic
+for k = 1:loop
+    U = lyap(A, A.', C);
+end
+toc
+cd(currDir)
+fprintf('new complex A(A.'')C with precomputed Schur:\n')
+tic
+for k = 1:loop    
+    U = lyap(A, A.', C);
+end
+toc
+

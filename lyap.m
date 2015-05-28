@@ -21,11 +21,24 @@ function X = lyap(A, B, C, E)
 %   Note that unlike the built-in MATLAB LYAP() routine there is no need for Q
 %   to be symmetric in the final case. Also note that no balancing is performed.
 %
-%   For solving generalised Sylvestter equations fo the form 
+%   For solving generalised Sylvestter equations of the form 
 %       A*X*B^T + C*X*D^T = E
 %   see bartelsStewart.m.
 %
-% See also BARTELSSTEWART.
+%   When solving for multiple righthand sides or with various constant diagonal
+%   shifts in A and/or B, it can be beneficial to precompute the Schur
+%   factorizations. In particular, V = lyap(A, C) can be computed as
+%
+%       [U, T] = schur(A, 'complex');
+%       V = U * lyap(T, U'*C*U) * U';
+%
+%   and V = lyap(A, B, C) as
+%
+%       [UA, TA] = schur(A, 'complex');
+%       [UB, TB] = schur(B, 'complex');
+%       V = UA * lyap(TA, TB, UA'*C*UB) * UB';
+%
+% See also SCHUR, BARTELSSTEWART.
 
 % Nick Hale, Nov 2014. (nick.p.hale@gmail.com)
 
@@ -69,19 +82,28 @@ function X = sylv(A, B, C)
 % Get sizes:
 [m, n] = size(C); 
 
-% Compute Schur factorizations. (P and T will be upper triangular.)
+% Compute Schur factorizations. P will be upper triangular. T will be upper or
+% lower. If T is upper triangular then we backward solve; if it's lower
+% triangular then do forward solve.
 [Z1, P] = schur(A, 'complex');
-if ( ~isempty(B) )
-    [Z2, T] = schur(B.', 'complex');
-    Z2 = conj(Z2);
-else
-    Z2 = Z1;
-    T = P;
+if ( isempty(B) || isequal(A, B') ) % <-- Should we check for isequal here?
+    Z2 = Z1;                        % (Since user _should_ have passed B = [].)
+    T = conj(P);
     n = size(A, 2);
+    solve_direction = 'backward';
+elseif ( isequal(A, B.') )          % <-- We _should_ here as no way to specify.
+    Z2 = conj(Z1);
+    T = P;
+    solve_direction = 'backward';
+else
+    % We must also compute the schur factorization of B and forward solve;
+    [Z2, T] = schur(B, 'complex');
+    T = T.';
+    solve_direction = 'forward';
 end
 
 % Transform the righthand side.
-F = Z1'*C*Z2;
+F = Z1' * C * Z2;
 
 % Initialise storage for transformed solution.
 Y = zeros(m, n);
@@ -90,8 +112,15 @@ Y = zeros(m, n);
 idx = diag(true(m, 1));
 p = diag(P);
 
-% Do a backwards substitution to construct the transformed solution.
-for k = n:-1:1
+% Forwards or backwards?
+if ( strcmp(solve_direction, 'backward') )
+    kk = n:-1:1;
+else
+    kk = 1:n;
+end
+
+% Do a backwards/forwards substitution to construct the transformed solution.
+for k = kk
     rhs = F(:,k) + Y*T(k,:).'; % <-- More efficient multiplication.
     % Find the kth column of the transformed solution.
     P(idx) = p + T(k,k);       % <-- Diagonal shift. More efficient this way.
@@ -99,6 +128,6 @@ for k = n:-1:1
 end
 
 % Transform solution back:
-X = Z1*Y*Z2';
+X = Z1 * Y * Z2';
 
 end

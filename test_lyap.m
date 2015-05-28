@@ -3,7 +3,7 @@ function pass = test_lyap()
 % Test LYAP against the built-in (i.e., Control Toolbox) implementation.
 
 tol = 1e-10;
-n = 9;
+n = 3;
 m = n+1;
 
 currDir = cd;
