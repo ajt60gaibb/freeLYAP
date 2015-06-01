@@ -82,35 +82,34 @@ function X = sylv(A, B, C)
 % Get sizes:
 [m, n] = size(C); 
 
-% Compute Schur factorizations. P will be upper triangular. T will be upper or
-% lower. If T is upper triangular then we backward solve; if it's lower
+% Compute Schur factorizations. TA will be upper triangular. TB will be upper or
+% lower. If TB is upper triangular then we backward solve; if it's lower
 % triangular then do forward solve.
-[Z1, P] = schur(A, 'complex');
+[ZA, TA] = schur(A, 'complex');
 if ( isempty(B) || isequal(A, B') ) % <-- Should we check for isequal here?
-    Z2 = Z1;                        % (Since user _should_ have passed B = [].)
-    T = conj(P);
+    ZB = ZA;                        % (Since user _should_ have passed B = [].)
+    TB = TA';
     n = size(A, 2);
     solve_direction = 'backward';
 elseif ( isequal(A, B.') )          % <-- We _should_ here as no way to specify.
-    Z2 = conj(Z1);
-    T = P;
+    ZB = conj(ZA);
+    TB = TA.';
     solve_direction = 'backward';
 else
     % We must also compute the schur factorization of B and forward solve;
-    [Z2, T] = schur(B, 'complex');
-    T = T.';
+    [ZB, TB] = schur(B, 'complex');
     solve_direction = 'forward';
 end
 
 % Transform the righthand side.
-F = Z1' * C * Z2;
+F = ZA' * C * ZB;
 
 % Initialise storage for transformed solution.
 Y = zeros(m, n);
 
 % Diagonal mask (for speed in shifted solves):
 idx = diag(true(m, 1));
-p = diag(P);
+p = diag(TA);
 
 % Forwards or backwards?
 if ( strcmp(solve_direction, 'backward') )
@@ -121,13 +120,13 @@ end
 
 % Do a backwards/forwards substitution to construct the transformed solution.
 for k = kk
-    rhs = F(:,k) + Y*T(k,:).'; % <-- More efficient multiplication.
+    rhs = F(:,k) + Y*TB(:,k); % <-- More efficient multiplication.
     % Find the kth column of the transformed solution.
-    P(idx) = p + T(k,k);       % <-- Diagonal shift. More efficient this way.
-    Y(:,k) = P \ (-rhs);
+    TA(idx) = p + TB(k,k);    % <-- Diagonal shift. More efficient this way.
+    Y(:,k) = TA \ (-rhs);
 end
 
 % Transform solution back:
-X = Z1 * Y * Z2';
+X = ZA * Y * ZB';
 
 end
