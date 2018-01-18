@@ -1,6 +1,6 @@
 freeLYAP
 ====================
-A MATLAB implementation of matrix equation solvers.
+A MATLAB implementation of various matrix equation solvers written by Nick Hale, Alex Townsend, and Heather Wilber.
 
 matrixEquationSolver()
 ====================
@@ -18,11 +18,6 @@ lyap()
 ===================
 Solves the Lyapunov matrix equation given by `A*X + X*A' + Q = 0`, the Sylvester equation `A*X + X*B + C = 0`, and 
 the generalized Lyapunov equation `A*X*E' + E*X*A' + Q = 0`.
-
-Disclaimer
-===================
-We do not claim that this is the best implementation of the Bartels-Stewart algorithm or that this is the best algorithm for solving `AXB' + CXD' = E`.
-
 
 References
 ===================
