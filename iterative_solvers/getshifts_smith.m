@@ -25,7 +25,7 @@ function [p, q] = getshifts_smith(L, varargin)
 %
 
 % written by Heather Wilber (heatherw3521@gmail.com)
-% Jan, 2018
+% Jan. 2018
 
 %%
 % part 1: compute ADI shift parameter: A mobius transform is used to 

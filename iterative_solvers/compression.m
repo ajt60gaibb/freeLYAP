@@ -3,7 +3,7 @@ function [A, S, B] = compression(Z, d, Y, tol, rel)
 % 
 % X = Z*diag(d)*Y';  
 %
-% This function compresses the factors of X:
+% Compresses the factors of X:
 % If rel = 1, a relative tolerance is used, 
 % and ||X -A*S*B'||_2 \leq tol ||X||_2. 
 %

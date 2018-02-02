@@ -2,7 +2,7 @@
 % 
 % This code is more efficient that lyap in the following situation:
 %
-% (i) A and B are large and sparse so that fast linear solves with A and B 
+% (i) A and B are sparse so that fast linear solves with A and B 
 % are possible. 
 % (ii) A and B are normal matrices
 % (iii) the eigenvalues of A and B are either contained in real disjoint 
@@ -108,8 +108,8 @@ B = Q*diag(eigsB)*Q'; % B is normal and has the desired eigenvalues
 
 %%
 % In this case, the shift parameter (p_i, q_i) is the same 
-% at every iteration i. The adi method is therefore equivalent to Smith's 
-% method. We can compute this parameter as follows: 
+% at every iteration i. The adi method is therefore equivalent to a method 
+% called Smith's method. We can compute this parameter as follows: 
 
 I = [o1 r1 o2 r2];
 [p,q] = getshifts_smith(I); 
