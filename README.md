@@ -19,6 +19,11 @@ lyap()
 Solves the Lyapunov matrix equation given by `A*X + X*A' + Q = 0`, the Sylvester equation `A*X + X*B + C = 0`, and 
 the generalized Lyapunov equation `A*X*E' + E*X*A' + Q = 0`.
 
+iterative_solvers/
+===================
+folder contains a collection of iterative solvers for the matrix equation  `A*X - X*B = F` based on the alternating direction implicit (ADI) method. 
+
+
 References
 ===================
 [1] R. H. Bartels & G. W. Stewart, Solution of the matrix equation
