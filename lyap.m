@@ -104,6 +104,13 @@ end
 % Transform the righthand side.
 F = ZA' * C * ZB;
 
+% Symmetric case is trivial!
+if ( isdiag(TA) && isdiag(TB) )
+    L = -1./(diag(TA) + diag(TB).');
+    X = ZA*(L.*F)*ZB';
+    return 
+end
+
 % Initialise storage for transformed solution.
 Y = zeros(m, n);
 
