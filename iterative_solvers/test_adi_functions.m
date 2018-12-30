@@ -208,7 +208,7 @@ I = [ a b c d];
 %(20)
 i = i + 1;
 X = adi(A, B, F, p, q); 
-pass(i) = ( norm(X - Xtrue)/NXtrue < 10*tolt );  
+pass(i) = ( norm(X - Xtrue)/NXtrue < 15*tolt );  
 
 %(21)
 i = i + 1; 

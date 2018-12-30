@@ -46,7 +46,7 @@ if isempty(varargin)
 elseif numel(varargin)==1
     comp = 1; 
     compute_shifts = 1; 
-    tol = eps; 
+    tol = varargin{1}; 
 elseif numel(varargin)==2
     comp = 0; 
     p = varargin{1};
